@@ -1,4 +1,4 @@
-version: '1.0'
+version: "1.0"
 services:
   - name: db
     type: mariadb
@@ -26,55 +26,6 @@ services:
       - 6379
     deployTo:
       - edge
-
-  - name: blog
-    type: docker
-    image: d2cio/wordpress
-    version: latest
-    volumes:
-      - directory: $MAIN_PATH/wp-content/uploads
-        sync: true
-      - directory: $MAIN_PATH/wp-content/themes
-        sync: true
-      - directory: $MAIN_PATH/wp-content/plugins
-        sync: true
-    ports:
-      - 80
-    remoteAccess: false
-    configFiles:
-      - dest: $MAIN_PATH/wp-config.php
-        src: ./configs/wp-config.php
-      - dest: $MAIN_PATH/db-config.php
-        src: ./configs/db-config.php
-      - dest: $MAIN_PATH/wp-content/db.php
-        src: ./configs/db.php
-      - dest: /usr/local/etc/php/php.ini
-        src: ./configs/php.ini
-      - dest: /etc/nginx/conf.d/default.conf
-        src: ./configs/default.conf
-    localDeps: |
-      cmd extract
-    initialCommands: |
-      cmd wp core install --url={{=service('varnish').getNginxDomain()}} --title='"$WP_TITLE"' --admin_user=$WP_ADMIN_USERNAME --admin_password=$WP_ADMIN_PASSWORD --admin_email=$WP_ADMIN_EMAIL --path=/var/www/{{=service('blog').get('name')}}
-      cmd wp plugin install varnish-http-purge --activate --path=/var/www/{{=service('blog').get('name')}}
-      cmd wp plugin install redis-cache --activate --path=/var/www/{{=service('blog').get('name')}}
-      cmd wp redis enable --path=/var/www/{{=service('blog').get('name')}}
-    env:
-      SERVICE_NAME: "{{=service('blog').get('name')}}"
-      WP_TITLE: null
-      WP_ADMIN_USERNAME: null
-      WP_ADMIN_PASSWORD: null
-      WP_ADMIN_EMAIL: null
-    comments:
-      env:
-        WP_TITLE: The title of your Wordpress website
-        WP_ADMIN_USERNAME: Username of administrator account
-        WP_ADMIN_PASSWORD: Password of administrator account
-        WP_ADMIN_EMAIL: Email of administrator account
-    volumesUID: 33
-    deployTo:
-      - main-one
-      - main-two
 
   - name: cache
     type: redis
